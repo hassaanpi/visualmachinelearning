@@ -28,6 +28,32 @@ load_model()
 def index():
     return "It works apparently"
 
+@app.route('/api/predict/itemLoc', methods=['POST'])
+def predict_item_locations():
+    if model is None:
+        return jsonify({"error": "Model not loaded"}), 500
+    try:
+        data = request.get_json()
+        items = data.get('items')
+
+        if items is None:
+            return jsonify({"error": "No items provided"}), 400
+        
+        itemList = []
+        
+        for itemlocs in items:
+            locations = predict_location_order_lstm(itemlocs)
+            itemList.append(locations['LOCATION_ID'].tolist()[0])
+
+        prediction = predict_location_order_lstm(itemList)  
+
+        return jsonify({
+            "prediction": prediction['LOCATION_ID'].tolist(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     if model is None:
